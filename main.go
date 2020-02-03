@@ -65,7 +65,7 @@ func main() {
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Fatalln("ListenAndServe: ", err)
 	}
 }
 
@@ -146,7 +146,7 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 		db := dbCon(dbURL)
 		defer db.Close()
 
-		if m, _ := regexp.MatchString("[a-z0-9][a-z0-9_-]*[a-z0-9]", user.Login); !m {
+		if m, _ := regexp.MatchString(`^[a-z0-9][a-z0-9_-]*[a-z0-9]$`, user.Login); !m {
 			http.Redirect(w, r, "/new#alert", 301)
 		}
 
@@ -162,7 +162,7 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 			)
 			// if there is an error inserting, handle it
 			if err != nil {
-				panic(err.Error())
+				log.Println(err.Error())
 			}
 			// be careful deferring Queries if you are using transactions
 			defer insert.Close()
@@ -211,7 +211,7 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 				order by created desc limit 10
 				`, user.ID)
 			if err != nil && err != sql.ErrNoRows {
-				log.Fatalln(err)
+				log.Println(err.Error())
 			}
 
 			for query.Next() {
@@ -330,7 +330,7 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 					)
 					// if there is an error inserting, handle it
 					if err != nil {
-						panic(err.Error())
+						log.Println(err.Error())
 					}
 					// be careful deferring Queries if you are using transactions
 					defer insert.Close()
@@ -339,7 +339,7 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 				if rowExists(db, `select chatID from chats where chatID = ?`, chatID) {
 					query, err := db.Query(`select userID, msg, created from chats where chatID = ? order by created`, chatID)
 					if err != nil && err != sql.ErrNoRows {
-						log.Fatalln(err)
+						log.Println(err.Error())
 					}
 
 					for query.Next() {
@@ -389,7 +389,7 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 				)
 				`, user.ID)
 				if err != nil && err != sql.ErrNoRows {
-					log.Fatalln(err)
+					log.Println(err.Error())
 				}
 
 				for query.Next() {
@@ -407,7 +407,7 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 						where chatID = ? and userID != ?
 					`, chat.ID, user.ID)
 						if err != nil && err != sql.ErrNoRows {
-							log.Fatalln(err)
+							log.Println(err.Error())
 						}
 						for queryMembersID.Next() {
 							var userID int
@@ -453,7 +453,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 					"update userList set password = ? where ID = ?",
 					shaStr(r.PostForm["password"][0]+user.Login), user.ID,
 				); err != nil {
-					panic(err.Error())
+					log.Println(err.Error())
 				}
 			}
 			if r.PostForm["fullname"][0] != "" {
@@ -461,7 +461,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 					"update userList set fullname = ? where ID = ?",
 					r.PostForm["fullname"][0], user.ID,
 				); err != nil {
-					panic(err.Error())
+					log.Println(err.Error())
 				}
 			}
 			if r.PostForm["bio"][0] != "" {
@@ -469,7 +469,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 					"update userList set BIO = ? where ID = ?",
 					r.PostForm["bio"][0], user.ID,
 				); err != nil {
-					panic(err.Error())
+					log.Println(err.Error())
 				}
 			}
 
@@ -520,7 +520,7 @@ func getUserFromID(id int) User {
 	if err := querry.Scan(
 		&user.Login, &user.Fullname, &user.BIO, &user.Created,
 	); err != nil && err != sql.ErrNoRows {
-		log.Fatalln(err)
+		log.Println(err.Error())
 	}
 	return user
 
@@ -539,7 +539,7 @@ func getUserFromLogin(login string) User {
 	if err := querry.Scan(
 		&user.ID, &user.Fullname, &user.BIO, &user.Created,
 	); err != nil && err != sql.ErrNoRows {
-		log.Fatalln(err)
+		log.Println(err.Error())
 	}
 	return user
 
@@ -576,7 +576,7 @@ func rowExists(db *sql.DB, query string, args ...interface{}) bool {
 	var exists bool
 	query = fmt.Sprintf("select exists (%s)", query)
 	if err := db.QueryRow(query, args...).Scan(&exists); err != nil && err != sql.ErrNoRows {
-		log.Fatalf("error checking if row exists '%s' %v", args, err)
+		log.Printf("error checking if row exists '%s' %v\n", args, err)
 	}
 	return exists
 }
