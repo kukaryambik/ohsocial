@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Simple Social</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css" href="assets/css/main.css">
+    </head>
+    <body>
+        <div class="main">
+            <div id=alert class="alert">
+                <div class="popup">
+                    User with this login does not exists or password is incorrect.
+                </div>
+            </div>
+            <div class="sign">
+                <form class="sign-form" method="POST" action="/auth">
+                    <span class="span">
+                        Login
+                    </span>
+
+                    <div>
+                        <input class="input sign-btn" type="text" name="login" placeholder="Login" required>
+                    </div>
+                    <div>
+                        <input class="input sign-btn" type="password" name="password" placeholder="Password" required>
+                    </div>
+                    <button class="btn-good sign-btn" name="signin">Sign In</button>
+                </form>
+                <form class="sign-form" method="GET" action="/new">
+                    <button class="btn-meh sign-btn" type="submit">Register</button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

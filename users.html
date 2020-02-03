@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Simple Social</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css" href="assets/css/main.css">
+    </head>
+    <body>
+        <div class="menu">
+            <h3>
+            <a class="btn-menu" href="/">Main</a>
+            <a class="btn-menu" href="/chats">Chats</a>
+            <a class="btn-menu" href="/users">Users</a>
+            <a class="btn-menu" style="float: right;" href="/logout">Logout</a>
+            </h3>
+        </div>
+        <div class="index">
+            <section class="container">
+                <div>
+                    <form action="/users" method="GET">
+                        <input autofocus class="search-input" value=""
+                        placeholder="Enter a user name" type="search" name="q">
+                    </form>
+                </div>
+                <br>
+                <hr>
+                <br>
+                <ul class="search-results">
+                    {{ range .UserList }}
+                    <li class="user-article">
+                        <div>
+                            <a href="/users?id={{ .ID }}"><h3 class="title">{{ .Fullname }}</h3></a>
+                            <p class="login">ID: {{ .ID }}</p>
+                            <br>
+                        </div>
+                    </li>
+                    {{ end }}
+                </ul>
+            </section>
+        </div>
+    </body>
+</html>

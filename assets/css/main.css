@@ -1,0 +1,197 @@
+/*//////////////////////////////////////////////////////////////////
+[ FONT ]*/
+
+@font-face {
+    font-family: OpenSans-Regular;
+    src: url(https://fonts.googleapis.com/css?family=Open+Sans:300,700);
+}
+  
+/*//////////////////////////////////////////////////////////////////
+[ RESTYLE TAG ]*/
+  
+* {
+    margin: 0px; 
+    padding: 0px; 
+    box-sizing: border-box;
+}
+  
+body, html {
+    height: 100%;
+    font-family: OpenSans-Regular, sans-serif;
+    background-color: #252525;
+}
+
+span::after {
+    content:"\A\A";
+    white-space: pre;
+}
+
+/*//////////////////////////////////////////////////////////////////
+[ Input ]*/
+.input {
+    border: none;
+    padding: 1% 5px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 85%;
+    margin: 1% auto;
+}
+
+/*//////////////////////////////////////////////////////////////////
+[ Index ]*/
+.index {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    width: 80%;
+    margin-left: -40%;
+    padding: 2%;
+    background-color: #dadada;
+    border-radius: 5px;
+}
+
+/*//////////////////////////////////////////////////////////////////
+[ Sign ]*/
+.sign {
+    text-align: center;
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    margin-left: -100px;
+    padding: 2%;
+    background-color: #dadada;
+    border-radius: 5px;
+}
+
+.sign-btn {
+    border-radius: 2px;
+    width: 180px;
+}
+
+/*//////////////////////////////////////////////////////////////////
+[ BUTTONS ]*/
+
+.btn-good {
+    background-color: #1cc987;
+    border: none;
+    color: white;
+    padding: 1% 50px;
+    border-radius: 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 90%;
+    margin: 1% auto;
+    cursor: pointer;
+}
+
+.btn-meh {
+    background-color: #1c87c9;
+    border: none;
+    color: white;
+    padding: 1% 50px;
+    border-radius: 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 90%;
+    margin: 1% auto;
+    cursor: pointer;
+}
+
+.btn-scary {
+    background-color: #c71b40;
+    border: none;
+    color: white;
+    padding: 1% 50px;
+    border-radius: 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 90%;
+    margin: 1% auto;
+    cursor: pointer;
+}
+
+.btn-menu {
+    background-color: #1c87c9;
+    border: none;
+    color: white;
+    padding: 0.5% 50px;
+    border-radius: 2px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 90%;
+    /*margin: 1% auto;*/
+    cursor: pointer;
+}
+
+.menu {
+    background-color: #979797;
+    border: none;
+    color: white;
+    padding: 0.5% 15px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/*//////////////////////////////////////////////////////////////////
+[ ALERTS ]*/
+
+.popup {
+    padding: 15px;
+    float: right;
+    width: auto;
+    background-color: #f44336;
+    color: white;
+  }
+  
+.alert {
+    visibility: hidden;
+}
+
+.alert:target {
+    visibility: visible;
+}
+
+  .closebtn {
+    margin-left: 15px;
+    color: white;
+    font-weight: bold;
+    float: right;
+    font-size: 22px;
+    line-height: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .closebtn:hover {
+    color: black;
+  }
+
+#alert {
+    -moz-animation: cssAnimation 0s ease-in 5s forwards;
+    /* Firefox */
+    -webkit-animation: cssAnimation 0s ease-in 5s forwards;
+    /* Safari and Chrome */
+    -o-animation: cssAnimation 0s ease-in 5s forwards;
+    /* Opera */
+    animation: cssAnimation 0s ease-in 5s forwards;
+    -webkit-animation-fill-mode: forwards;
+    animation-fill-mode: forwards;
+}
+@keyframes cssAnimation {
+    to {
+        width: 0;
+        height: 0;
+        overflow:hidden;
+    }
+}
+@-webkit-keyframes cssAnimation {
+    to {
+        width: 0;
+        height: 0;
+        visibility:hidden;
+    }
+}
