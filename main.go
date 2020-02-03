@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -144,6 +145,10 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 
 		db := dbCon(dbURL)
 		defer db.Close()
+
+		if m, _ := regexp.MatchString("[a-z0-9][a-z0-9_-]*[a-z0-9]", user.Login); !m {
+			http.Redirect(w, r, "/new#alert", 301)
+		}
 
 		if rowExists(db, `select * from userList where login = ?`, user.Login) {
 			http.Redirect(w, r, "/new#alert", 301)
