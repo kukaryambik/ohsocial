@@ -17,10 +17,17 @@
         <div class="index">
             <section class="container">
                 <div>
-                    <p>User: {{ .Fullname }}</p>
+                    <h3>{{ .Fullname }}</h3>
+                    <p>{{ .Location }}</p>
+                    <br>
                     <p>ID: {{ .ID }}</p>
                     <p>Login: {{ .Login }}</p>
-                    <p>BIO: {{ .BIO }}</p>
+                    <br>
+                    <p>Gender: {{ .Gender }}</p>
+                    <p>Date of birth: {{ .DateOfBirth }}</p>
+                    <br>
+                    <p>Interests: {{ .Interests }}</p>
+                    <p>BIO: {{ .Bio }}</p>
                     <br>
                     <a class="btn-menu" href="/edit"> Edit </a>
                 </div>

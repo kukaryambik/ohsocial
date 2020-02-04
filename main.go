@@ -20,13 +20,19 @@ import (
 
 // User structure
 type User struct {
-	ID         int
-	Login      string
-	Password   string
-	Fullname   string
-	BIO        string
-	Created    string
-	LastUpdate string
+	ID          int
+	Login       string
+	Password    string
+	FirstName   string
+	LastName    string
+	Fullname    string
+	DateOfBirth string
+	Gender      string
+	Interests   string
+	Bio         string
+	Location    string
+	Created     string
+	Updated     string
 }
 
 var (
@@ -75,12 +81,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/auth", 301)
 	} else {
 
-		user := getUserFromLogin(cookieUser)
-
 		db := dbCon(dbURL)
 		defer db.Close()
 
-		t := template.Must(template.ParseFiles("index.html"))
+		user := getUser(db, "login", cookieUser)
+
+		t := template.Must(template.ParseFiles("html/index.html"))
 		t.Execute(w, user)
 	}
 }
@@ -92,7 +98,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		t := template.Must(template.ParseFiles("auth.html"))
+		t := template.Must(template.ParseFiles("html/auth.html"))
 		t.Execute(w, nil)
 	} else {
 		user := User{
@@ -133,36 +139,50 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		t := template.Must(template.ParseFiles("new.html"))
+		t := template.Must(template.ParseFiles("html/new.html"))
 		t.Execute(w, nil)
 	} else {
+		f := r.PostForm
 		user := User{
-			Login:    r.PostForm["login"][0],
-			Password: shaStr(r.PostForm["password"][0] + r.PostForm["login"][0]),
-			Fullname: strings.Join(r.PostForm["fullname"], " "),
-			BIO:      strings.Join(r.PostForm["bio"], " "),
+			Login:       f["login"][0],
+			Password:    shaStr(f["password"][0] + f["login"][0]),
+			FirstName:   f["firstname"][0],
+			LastName:    f["lastname"][0],
+			DateOfBirth: f["dateofbirth"][0],
+			Gender:      f["gender"][0],
+			Interests:   f["interests"][0],
+			Bio:         f["bio"][0],
+			Location:    f["location"][0],
 		}
 
 		db := dbCon(dbURL)
 		defer db.Close()
 
-		if m, _ := regexp.MatchString(`^[a-z0-9][a-z0-9_-]*[a-z0-9]$`, user.Login); !m {
+		if m, _ := regexp.MatchString(`^[a-z0-9]+$`, user.Login); !m {
 			http.Redirect(w, r, "/new#alert", 301)
+			return
 		}
 
-		if rowExists(db, `select * from userList where login = ?`, user.Login) {
+		if rowExists(db, `select login from userList where login = ?`, user.Login) {
 			http.Redirect(w, r, "/new#alert", 301)
 		} else {
 			insert, err := db.Query(
-				"insert into userList (login, password, fullname, BIO) values (?, ?, ?, ?)",
+				`insert into userList
+				(login, password, firstName, lastName, dateOfBirth, gender, interests, bio, location)
+				values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 				user.Login,
 				user.Password,
-				user.Fullname,
-				user.BIO,
+				user.FirstName,
+				user.LastName,
+				user.DateOfBirth,
+				user.Gender,
+				user.Interests,
+				user.Bio,
+				user.Location,
 			)
 			// if there is an error inserting, handle it
 			if err != nil {
-				log.Println(err.Error())
+				log.Println(err)
 			}
 			// be careful deferring Queries if you are using transactions
 			defer insert.Close()
@@ -178,10 +198,10 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/auth", 301)
 	} else {
 
-		user := getUserFromLogin(cookieUser)
-
 		db := dbCon(dbURL)
 		defer db.Close()
+
+		user := getUser(db, "login", cookieUser)
 
 		u, err := url.Parse(r.URL.String())
 		if err != nil {
@@ -205,27 +225,30 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 			var data tmplData
 
 			query, err := db.Query(`
-				select ID, fullname, BIO, created
-				from userList where ID != ?
-				and (fullname like '%`+search+`%' or login like '%`+search+`%')
-				order by created desc limit 10
-				`, user.ID)
+				select ID, login, firstName, lastName, updated
+				from userList
+				where concat_ws(' ', login, firstName, lastName) like '%` + search + `%'
+				order by updated desc limit 10
+				`)
 			if err != nil && err != sql.ErrNoRows {
 				log.Println(err.Error())
 			}
 
 			for query.Next() {
 				var inDB User
-				if err := query.Scan(&inDB.ID, &inDB.Fullname, &inDB.BIO, &inDB.Created); err != nil {
+				if err := query.Scan(
+					&inDB.ID, &inDB.Login, &inDB.FirstName, &inDB.LastName, &inDB.Updated,
+				); err != nil {
 					log.Println(err)
 					continue
 				}
+				inDB.Fullname = userName(inDB)
 				data.UserList = append(data.UserList, inDB)
 			}
 
 			defer query.Close()
 
-			t := template.Must(template.ParseFiles("users.html"))
+			t := template.Must(template.ParseFiles("html/users.html"))
 			t.Execute(w, data)
 		} else {
 
@@ -237,11 +260,11 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, "/", 301)
 			}
 
-			if rowExists(db, `select * from userList where ID = ?`, data.ID) {
-				data = getUserFromID(data.ID)
+			if rowExists(db, `select login from userList where ID = ?`, data.ID) {
+				data = getUser(db, "ID", data.ID)
 			}
 
-			t := template.Must(template.ParseFiles("user.html"))
+			t := template.Must(template.ParseFiles("html/user.html"))
 			t.Execute(w, data)
 		}
 	}
@@ -253,10 +276,10 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/auth", 301)
 	} else {
 
-		user := getUserFromLogin(cookieUser)
-
 		db := dbCon(dbURL)
 		defer db.Close()
+
+		user := getUser(db, "login", cookieUser)
 
 		u, err := url.Parse(r.URL.String())
 		if err != nil {
@@ -276,8 +299,9 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			type tmplData struct {
-				ChatID int
-				Chat   []msg
+				ChatName string
+				ChatID   int
+				Chat     []msg
 			}
 
 			var data tmplData
@@ -341,6 +365,9 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 					if err != nil && err != sql.ErrNoRows {
 						log.Println(err.Error())
 					}
+					defer query.Close()
+
+					data.ChatName = getChat(db, chatID, user.ID)
 
 					for query.Next() {
 						var m msg
@@ -353,15 +380,13 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 						if u == user.ID {
 							m.User = "Me"
 						} else {
-							m.User = getUserFromID(u).Fullname
+							m.User = getUser(db, "ID", u).Fullname
 						}
 						data.Chat = append(data.Chat, m)
 					}
-
-					defer query.Close()
 				}
 
-				t := template.Must(template.ParseFiles("chat.html"))
+				t := template.Must(template.ParseFiles("html/chat.html"))
 				t.Execute(w, data)
 			} else {
 				http.Redirect(w, r, "/chats", 301)
@@ -369,7 +394,7 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 
 			type chatMeta struct {
-				ID   string
+				ID   int
 				Name string
 			}
 
@@ -400,26 +425,7 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 					}
 
 					if chat.Name == "" {
-						var chatMembers []string
-						queryMembersID, err := db.Query(`
-						select userID
-						from chatUser
-						where chatID = ? and userID != ?
-					`, chat.ID, user.ID)
-						if err != nil && err != sql.ErrNoRows {
-							log.Println(err.Error())
-						}
-						for queryMembersID.Next() {
-							var userID int
-							if err := queryMembersID.Scan(&userID); err != nil {
-								log.Println(err)
-								continue
-							}
-							tmpUser := getUserFromID(userID)
-							chatMembers = append(chatMembers, tmpUser.Fullname)
-						}
-						chat.Name = strings.Join(chatMembers, ",")
-						defer queryMembersID.Close()
+						chat.Name = getChat(db, chat.ID, user.ID)
 					}
 					data.Chats = append(data.Chats, chat)
 				}
@@ -427,7 +433,7 @@ func chatsHandler(w http.ResponseWriter, r *http.Request) {
 				defer query.Close()
 			}
 
-			t := template.Must(template.ParseFiles("chats.html"))
+			t := template.Must(template.ParseFiles("html/chats.html"))
 			t.Execute(w, data)
 		}
 	}
@@ -439,37 +445,19 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/auth", 301)
 	} else {
 
-		user := getUserFromLogin(cookieUser)
-
 		db := dbCon(dbURL)
 		defer db.Close()
 
+		user := getUser(db, "login", cookieUser)
+
 		if r.Method == "GET" {
-			t := template.Must(template.ParseFiles("edit.html"))
+			t := template.Must(template.ParseFiles("html/edit.html"))
 			t.Execute(w, user)
 		} else {
-			if r.PostForm["password"][0] != "" {
-				if _, err := db.Exec(
-					"update userList set password = ? where ID = ?",
-					shaStr(r.PostForm["password"][0]+user.Login), user.ID,
-				); err != nil {
-					log.Println(err.Error())
-				}
-			}
-			if r.PostForm["fullname"][0] != "" {
-				if _, err := db.Exec(
-					"update userList set fullname = ? where ID = ?",
-					r.PostForm["fullname"][0], user.ID,
-				); err != nil {
-					log.Println(err.Error())
-				}
-			}
-			if r.PostForm["bio"][0] != "" {
-				if _, err := db.Exec(
-					"update userList set BIO = ? where ID = ?",
-					r.PostForm["bio"][0], user.ID,
-				); err != nil {
-					log.Println(err.Error())
+			f := r.PostForm
+			for _, i := range strings.Split("password, firstName, lastName, dateOfBirth, gender, interests, bio, location", ", ") {
+				if f[i][0] != "" {
+					setUser(db, user, i, f[i][0])
 				}
 			}
 
@@ -496,6 +484,41 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getChat(db *sql.DB, chatID, userID int) string {
+	var name string
+	err := db.QueryRow(`select name	from chatList where ID = ?`, chatID).Scan(&name)
+	if err != nil && err != sql.ErrNoRows {
+		log.Println(err.Error())
+	}
+
+	if name == "" {
+		var chatMembers []string
+		queryMembersID, err := db.Query(`
+			select userID from chatUser
+			where chatID = ? and userID != ?
+		`, chatID, userID)
+		if err != nil && err != sql.ErrNoRows {
+			log.Println(err.Error())
+		}
+		defer queryMembersID.Close()
+		for queryMembersID.Next() {
+			var tmpUserID int
+			if err := queryMembersID.Scan(&tmpUserID); err != nil {
+				log.Println(err)
+				continue
+			}
+			tmpUser := getUser(db, "ID", tmpUserID)
+			chatMembers = append(chatMembers, tmpUser.Fullname)
+		}
+		var sep string
+		if len(chatMembers) > 1 {
+			sep = ", "
+		}
+		name = strings.Join(chatMembers, sep)
+	}
+	return name
+}
+
 func checkCookie(r *http.Request) (string, bool) {
 	cookie, err := r.Cookie("Oreo")
 	if err != nil {
@@ -507,41 +530,42 @@ func checkCookie(r *http.Request) (string, bool) {
 	return "", false
 }
 
-func getUserFromID(id int) User {
-
-	var user User
-	user.ID = id
-
-	db := dbCon(dbURL)
-	defer db.Close()
-
-	querry := db.QueryRow(`select login, fullname, BIO, created from userList where id = ?`, id)
-
-	if err := querry.Scan(
-		&user.Login, &user.Fullname, &user.BIO, &user.Created,
-	); err != nil && err != sql.ErrNoRows {
+func setUser(db *sql.DB, user User, key, value string) {
+	if _, err := db.Exec(
+		`update userList set `+key+` = ? where ID = ?`, value, user.ID,
+	); err != nil {
 		log.Println(err.Error())
+		return
 	}
-	return user
-
 }
 
-func getUserFromLogin(login string) User {
+func userName(user User) string {
+	var n string
+	if user.FirstName+user.LastName != "" {
+		n = fmt.Sprintf(`%s %s`, user.FirstName, user.LastName)
+	} else {
+		n = user.Login
+	}
+	return n
+}
 
-	var user User
-	user.Login = login
+func getUser(db *sql.DB, from string, user interface{}) User {
 
-	db := dbCon(dbURL)
-	defer db.Close()
+	var u User
 
-	querry := db.QueryRow(`select ID, fullname, BIO, created from userList where login = ?`, login)
+	querry := db.QueryRow(`
+		select
+			ID, login, firstName, lastName, dateOfBirth, gender, interests, bio, location, created
+		from userList where `+from+` = ?
+	`, user)
 
 	if err := querry.Scan(
-		&user.ID, &user.Fullname, &user.BIO, &user.Created,
+		&u.ID, &u.Login, &u.FirstName, &u.LastName, &u.DateOfBirth, &u.Gender, &u.Interests, &u.Bio, &u.Location, &u.Created,
 	); err != nil && err != sql.ErrNoRows {
 		log.Println(err.Error())
 	}
-	return user
+	u.Fullname = userName(u)
+	return u
 
 }
 
