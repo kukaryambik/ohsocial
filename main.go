@@ -453,11 +453,12 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			t := template.Must(template.ParseFiles("html/edit.html"))
 			t.Execute(w, user)
-		} else {
-			f := r.PostForm
-			for _, i := range strings.Split("password, firstName, lastName, dateOfBirth, gender, interests, bio, location", ", ") {
-				if f[i][0] != "" {
-					setUser(db, user, i, f[i][0])
+		} else if r.Method == "POST" {
+			p := r.PostForm
+			f := []string{"firstName", "lastName", "dateOfBirth", "gender", "interests", "bio", "location"}
+			for _, i := range f {
+				if p[strings.ToLower(i)][0] != "" {
+					setUser(db, user, i, p[strings.ToLower(i)][0])
 				}
 			}
 

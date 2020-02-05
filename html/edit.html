@@ -20,18 +20,19 @@
                     <span>
                         Edit profile
                     </span>
-
+                    <!--
                     <div>
-                        <!-- pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$" -->
                         <input class="input sign-btn"
-                        type="password" name="password" placeholder="New password" required>
+                        pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$"
+                        type="password" name="password" placeholder="New password">
                     </div>
                     <br>
+                    -->
                     <div>
-                        <input class="input sign-btn" type="text" maxlength="255" name="firstname" placeholder="{{ .FirstName }}" required>
+                        <input class="input sign-btn" type="text" maxlength="255" name="firstname" placeholder="{{ .FirstName }}">
                     </div>
                     <div>
-                        <input class="input sign-btn" type="text" maxlength="255" name="lastname" placeholder="{{ .LastName }}" required>
+                        <input class="input sign-btn" type="text" maxlength="255" name="lastname" placeholder="{{ .LastName }}">
                     </div><br>
                     <div>
                         <label for="bday" style="font-size: smaller;">Date of birth:</label><br>
